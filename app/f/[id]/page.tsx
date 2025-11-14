@@ -90,7 +90,7 @@ function RankedQuestion({
         const currentY = touch.clientY
         const offsetY = currentY - startY
         
-        // Update visual offset
+        // Update visual offset - keep it so card follows finger
         setTouchDragY(offsetY)
         
         // Calculate target position
@@ -98,31 +98,30 @@ function RankedQuestion({
         const touchY = currentY - containerRect.top
         
         const allItems = Array.from(containerRef.current.children) as HTMLElement[]
-        let targetIndex = index
+        const currentIndex = touchDragIndex !== null ? touchDragIndex : index
+        let targetIndex = currentIndex
         
         for (let i = 0; i < allItems.length; i++) {
           const itemRect = allItems[i].getBoundingClientRect()
           const itemMiddle = itemRect.top - containerRect.top + itemRect.height / 2
           
-          if (touchY < itemMiddle && i < index) {
+          if (touchY < itemMiddle && i < currentIndex) {
             targetIndex = i
             break
-          } else if (touchY > itemMiddle && i > index) {
+          } else if (touchY > itemMiddle && i > currentIndex) {
             targetIndex = i
           }
         }
         
         // Reorder if position changed
-        if (targetIndex !== index && targetIndex !== touchDragIndex) {
+        if (targetIndex !== currentIndex) {
           const newRankings = [...rankings]
-          const currentIndex = touchDragIndex !== null ? touchDragIndex : index
           const [movedItem] = newRankings.splice(currentIndex, 1)
           newRankings.splice(targetIndex, 0, movedItem)
           setRankings(newRankings)
           onChange(question.id, newRankings)
           setTouchDragIndex(targetIndex)
-          startY = currentY
-          setTouchDragY(0)
+          // DON'T reset startY or offset - keep card under finger
         }
       }
 
