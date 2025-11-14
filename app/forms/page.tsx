@@ -154,13 +154,6 @@ export default function FormsPage() {
                       )}
                     </button>
                   </div>
-
-                  <Link
-                    href={`/responses/${form.id}`}
-                    className="block mt-2 text-center px-4 py-2 text-primary-600 hover:bg-primary-50 rounded-lg transition-colors text-sm"
-                  >
-                    View Responses
-                  </Link>
                 </div>
               </div>
             ))}

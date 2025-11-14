@@ -8,7 +8,8 @@ export async function GET() {
       process.env.POSTGRES_URL || process.env.DATABASE_URL || "not set";
 
     // Parse the connection string to get host/database info (safely)
-    let dbInfo: string | { host: string; database: string; user: string } = "Connection string not found";
+    let dbInfo: string | { host: string; database: string; user: string } =
+      "Connection string not found";
     if (connectionString !== "not set") {
       try {
         const url = new URL(connectionString);
