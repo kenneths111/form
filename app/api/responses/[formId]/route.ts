@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: { formId: string } }
 ) {
   try {
-    const responses = getResponsesByFormId(params.formId)
+    const responses = await getResponsesByFormId(params.formId)
     return NextResponse.json(responses)
   } catch (error) {
     return NextResponse.json(

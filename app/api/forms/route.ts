@@ -5,7 +5,7 @@ import { nanoid } from 'nanoid'
 
 export async function GET() {
   try {
-    const forms = getAllForms()
+    const forms = await getAllForms()
     return NextResponse.json(forms)
   } catch (error) {
     return NextResponse.json(
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       updatedAt: now,
     }
     
-    saveForm(form)
+    await saveForm(form)
     return NextResponse.json(form, { status: 201 })
   } catch (error) {
     return NextResponse.json(

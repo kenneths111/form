@@ -6,7 +6,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const form = getFormById(params.id)
+    const form = await getFormById(params.id)
     if (!form) {
       return NextResponse.json(
         { error: 'Form not found' },
@@ -28,7 +28,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const existingForm = getFormById(params.id)
+    const existingForm = await getFormById(params.id)
     
     if (!existingForm) {
       return NextResponse.json(
@@ -44,7 +44,7 @@ export async function PUT(
       updatedAt: new Date().toISOString(),
     }
     
-    saveForm(updatedForm)
+    await saveForm(updatedForm)
     return NextResponse.json(updatedForm)
   } catch (error) {
     return NextResponse.json(
@@ -59,7 +59,7 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    deleteForm(params.id)
+    await deleteForm(params.id)
     return NextResponse.json({ success: true })
   } catch (error) {
     return NextResponse.json(
