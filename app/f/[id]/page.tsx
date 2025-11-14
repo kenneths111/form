@@ -22,6 +22,7 @@ function RankedQuestion({
   // Mobile drag state
   const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null)
   const [touchDragY, setTouchDragY] = useState<number>(0)
+  const [touchTargetIndex, setTouchTargetIndex] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
@@ -77,11 +78,12 @@ function RankedQuestion({
       const handleTouchStart = (e: TouchEvent) => {
         startY = e.touches[0].clientY
         setTouchDragIndex(index)
+        setTouchTargetIndex(index)
         setTouchDragY(0)
       }
 
       const handleTouchMove = (e: TouchEvent) => {
-        if (!containerRef.current || !item) return
+        if (!containerRef.current || !item || touchDragIndex === null) return
         
         // Prevent page scrolling
         e.preventDefault()
@@ -89,46 +91,47 @@ function RankedQuestion({
         const touch = e.touches[0]
         const currentY = touch.clientY
         
-        // Calculate offset from the card's CURRENT position (not original start position)
-        const itemRect = item.getBoundingClientRect()
-        const offsetY = currentY - (itemRect.top + itemRect.height / 2)
+        // Calculate offset from the start position
+        const offsetY = currentY - startY
         
         // Update visual offset
         setTouchDragY(offsetY)
         
-        // Calculate target position
+        // Calculate target position (where it would drop)
         const containerRect = containerRef.current.getBoundingClientRect()
         const touchY = currentY - containerRect.top
         
         const allItems = Array.from(containerRef.current.children) as HTMLElement[]
-        const currentIndex = touchDragIndex !== null ? touchDragIndex : index
-        let targetIndex = currentIndex
+        let targetIndex = touchDragIndex
         
         for (let i = 0; i < allItems.length; i++) {
           const itemRect = allItems[i].getBoundingClientRect()
           const itemMiddle = itemRect.top - containerRect.top + itemRect.height / 2
           
-          if (touchY < itemMiddle && i < currentIndex) {
+          if (touchY < itemMiddle && i < touchDragIndex) {
             targetIndex = i
             break
-          } else if (touchY > itemMiddle && i > currentIndex) {
+          } else if (touchY > itemMiddle && i > touchDragIndex) {
             targetIndex = i
           }
         }
         
-        // Reorder if position changed
-        if (targetIndex !== currentIndex) {
-          const newRankings = [...rankings]
-          const [movedItem] = newRankings.splice(currentIndex, 1)
-          newRankings.splice(targetIndex, 0, movedItem)
-          setRankings(newRankings)
-          onChange(question.id, newRankings)
-          setTouchDragIndex(targetIndex)
-        }
+        // Just update target index, don't reorder yet
+        setTouchTargetIndex(targetIndex)
       }
 
       const handleTouchEnd = () => {
+        // Now do the actual reorder on release
+        if (touchDragIndex !== null && touchTargetIndex !== null && touchDragIndex !== touchTargetIndex) {
+          const newRankings = [...rankings]
+          const [movedItem] = newRankings.splice(touchDragIndex, 1)
+          newRankings.splice(touchTargetIndex, 0, movedItem)
+          setRankings(newRankings)
+          onChange(question.id, newRankings)
+        }
+        
         setTouchDragIndex(null)
+        setTouchTargetIndex(null)
         setTouchDragY(0)
       }
 
