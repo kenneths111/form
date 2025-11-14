@@ -83,7 +83,7 @@ function RankedQuestion({
       }
 
       const handleTouchMove = (e: TouchEvent) => {
-        if (!containerRef.current || !item || touchDragIndex === null) return
+        if (!containerRef.current || touchDragIndex === null) return
         
         // Prevent page scrolling
         e.preventDefault()
@@ -91,13 +91,11 @@ function RankedQuestion({
         const touch = e.touches[0]
         const currentY = touch.clientY
         
-        // Calculate offset from the start position
+        // Simple offset from start
         const offsetY = currentY - startY
-        
-        // Update visual offset
         setTouchDragY(offsetY)
         
-        // Calculate target position (where it would drop)
+        // Calculate target position
         const containerRect = containerRef.current.getBoundingClientRect()
         const touchY = currentY - containerRect.top
         
@@ -105,6 +103,8 @@ function RankedQuestion({
         let targetIndex = touchDragIndex
         
         for (let i = 0; i < allItems.length; i++) {
+          if (i === touchDragIndex) continue // Skip the dragged item
+          
           const itemRect = allItems[i].getBoundingClientRect()
           const itemMiddle = itemRect.top - containerRect.top + itemRect.height / 2
           
@@ -116,20 +116,25 @@ function RankedQuestion({
           }
         }
         
-        // Just update target index, don't reorder yet
-        setTouchTargetIndex(targetIndex)
+        // Reorder in real-time so cards make space
+        if (targetIndex !== touchDragIndex) {
+          const newRankings = [...rankings]
+          const [movedItem] = newRankings.splice(touchDragIndex, 1)
+          newRankings.splice(targetIndex, 0, movedItem)
+          setRankings(newRankings)
+          onChange(question.id, newRankings)
+          
+          // Update which item we're tracking
+          setTouchDragIndex(targetIndex)
+          
+          // Adjust offset so card stays under finger
+          const itemHeight = item?.offsetHeight || 60
+          const positionChange = targetIndex - touchDragIndex
+          startY = startY - (positionChange * (itemHeight + 8)) // 8 is gap
+        }
       }
 
       const handleTouchEnd = () => {
-        // Now do the actual reorder on release
-        if (touchDragIndex !== null && touchTargetIndex !== null && touchDragIndex !== touchTargetIndex) {
-          const newRankings = [...rankings]
-          const [movedItem] = newRankings.splice(touchDragIndex, 1)
-          newRankings.splice(touchTargetIndex, 0, movedItem)
-          setRankings(newRankings)
-          onChange(question.id, newRankings)
-        }
-        
         setTouchDragIndex(null)
         setTouchTargetIndex(null)
         setTouchDragY(0)
