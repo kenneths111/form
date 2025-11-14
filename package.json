@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "import-responses": "tsx scripts/import-responses.ts"
+    "import-typeform": "tsx scripts/import-typeform.ts"
   },
   "dependencies": {
     "@vercel/postgres": "^0.5.1",
