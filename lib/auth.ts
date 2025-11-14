@@ -19,4 +19,3 @@ export function verifyHash(hash: string): boolean {
     return false;
   }
 }
-

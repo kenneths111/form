@@ -30,7 +30,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <Link
             href="/create"
             className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 border-2 border-transparent hover:border-primary-500"
@@ -61,23 +61,6 @@ export default function Home() {
               </h2>
               <p className="text-gray-600">
                 View and manage all your created forms
-              </p>
-            </div>
-          </Link>
-
-          <Link
-            href="/responses/auth"
-            className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 border-2 border-transparent hover:border-primary-500"
-          >
-            <div className="flex flex-col items-center text-center">
-              <div className="bg-primary-100 rounded-full p-6 mb-6 group-hover:bg-primary-500 transition-colors duration-300">
-                <BarChart3 className="w-12 h-12 text-primary-600 group-hover:text-white transition-colors duration-300" />
-              </div>
-              <h2 className="text-2xl font-semibold text-gray-900 mb-3">
-                View Responses
-              </h2>
-              <p className="text-gray-600">
-                Analyze responses collected from your forms
               </p>
             </div>
           </Link>

@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
     if (checkPassword(password)) {
       // Create response with cookie
       const response = NextResponse.json({ success: true });
-      
+
       // Set cookie that expires in 24 hours
       response.cookies.set("responses_auth", hashPassword(password), {
         httpOnly: true,
@@ -25,10 +25,6 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    return NextResponse.json(
-      { error: "Invalid request" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 }
-
