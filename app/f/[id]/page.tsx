@@ -18,11 +18,6 @@ function RankedQuestion({
   const [rankings, setRankings] = useState<string[]>([])
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverItem, setDragOverItem] = useState<string | null>(null)
-  const [touchStartY, setTouchStartY] = useState<number | null>(null)
-  const [touchedIndex, setTouchedIndex] = useState<number | null>(null)
-  const [touchDragOffset, setTouchDragOffset] = useState<number>(0)
-  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
-  const itemHeightRef = useRef<number>(0)
 
   useEffect(() => {
     // Initialize rankings from answer or from options
@@ -64,96 +59,6 @@ function RankedQuestion({
     setDragOverItem(null)
   }
 
-  // Mobile touch handlers with native events to prevent scrolling
-  useEffect(() => {
-    const elements = itemRefs.current
-
-    const cleanupFns = elements.map((element, index) => {
-      if (!element) return () => {}
-
-      let startY = 0
-      let isDragging = false
-
-      const handleTouchStart = (e: TouchEvent) => {
-        const touch = e.touches[0]
-        startY = touch.clientY
-        isDragging = false
-        setTouchStartY(startY)
-        setTouchedIndex(index)
-        setTouchDragOffset(0)
-        
-        // Store item height for calculations
-        if (element && itemHeightRef.current === 0) {
-          itemHeightRef.current = element.offsetHeight + 8 // +8 for gap
-        }
-      }
-
-      const handleTouchMove = (e: TouchEvent) => {
-        if (touchedIndex === null || touchStartY === null) return
-        
-        const touch = e.touches[0]
-        const currentY = touch.clientY
-        const diffY = currentY - startY
-        
-        // Start dragging if moved more than 10px
-        if (!isDragging && Math.abs(diffY) > 10) {
-          isDragging = true
-        }
-        
-        // If dragging, prevent scrolling and update visual offset
-        if (isDragging) {
-          e.preventDefault() // This only works with { passive: false }
-          setTouchDragOffset(diffY)
-          
-          // Calculate target position based on drag distance
-          const itemHeight = itemHeightRef.current || 60
-          const positionChange = Math.round(diffY / itemHeight)
-          const targetIndex = Math.max(0, Math.min(rankings.length - 1, index + positionChange))
-          
-          // Reorder in real-time if target changed
-          if (targetIndex !== index) {
-            const newRankings = [...rankings]
-            const item = newRankings[index]
-            newRankings.splice(index, 1)
-            newRankings.splice(targetIndex, 0, item)
-            setRankings(newRankings)
-            onChange(question.id, newRankings)
-            
-            // Update the touched index to follow the item
-            setTouchedIndex(targetIndex)
-            
-            // Reset the offset and start position
-            startY = currentY
-            setTouchDragOffset(0)
-          }
-        }
-      }
-
-      const handleTouchEnd = () => {
-        isDragging = false
-        setTouchStartY(null)
-        setTouchedIndex(null)
-        setTouchDragOffset(0)
-      }
-
-      element.addEventListener('touchstart', handleTouchStart, { passive: true })
-      element.addEventListener('touchmove', handleTouchMove, { passive: false })
-      element.addEventListener('touchend', handleTouchEnd, { passive: true })
-      element.addEventListener('touchcancel', handleTouchEnd, { passive: true })
-
-      return () => {
-        element.removeEventListener('touchstart', handleTouchStart)
-        element.removeEventListener('touchmove', handleTouchMove)
-        element.removeEventListener('touchend', handleTouchEnd)
-        element.removeEventListener('touchcancel', handleTouchEnd)
-      }
-    })
-
-    return () => {
-      cleanupFns.forEach(cleanup => cleanup())
-    }
-  }, [rankings, touchedIndex, touchStartY, question.id, onChange])
-
   const moveUp = (index: number) => {
     if (index === 0) return
     const newRankings = [...rankings]
@@ -178,28 +83,18 @@ function RankedQuestion({
     <div className="space-y-2">
       <p className="text-xs text-primary-500 mb-3">
         <span className="hidden sm:inline">Drag to reorder or use arrow buttons.</span>
-        <span className="inline sm:hidden">Swipe items up or down to reorder, or use arrow buttons.</span>
+        <span className="inline sm:hidden">Use arrow buttons to reorder.</span>
         {' '}Rank 1 is your top choice.
       </p>
       {rankings.map((option, index) => (
         <div
           key={option}
-          ref={(el) => {
-            itemRefs.current[index] = el
-          }}
           draggable
           onDragStart={(e) => handleDragStart(e, option)}
           onDragOver={(e) => handleDragOver(e, option)}
           onDragEnd={handleDragEnd}
-          style={{
-            transform: touchedIndex === index ? `translateY(${touchDragOffset}px)` : 'none',
-            transition: touchedIndex === index && touchDragOffset !== 0 ? 'none' : 'all 0.2s',
-            zIndex: touchedIndex === index ? 10 : 1,
-          }}
-          className={`flex items-center gap-3 p-3 rounded-md border select-none ${
-            touchedIndex === index
-              ? 'border-accent-500 bg-accent-50 shadow-lg' 
-              : 'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
+          className={`flex items-center gap-3 p-3 rounded-md border transition-all select-none ${
+            'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
           } ${draggedItem === option ? 'opacity-40' : ''} ${
             dragOverItem === option && draggedItem !== option ? 'border-accent-400 scale-105' : ''
           }`}
