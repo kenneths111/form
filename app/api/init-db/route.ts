@@ -11,8 +11,8 @@ export async function GET() {
     const seedResult = await seedDefaultForm();
 
     return NextResponse.json({
-      message: "Database initialized and seeded successfully",
       ...seedResult,
+      initialized: true,
     });
   } catch (error) {
     console.error("Database initialization error:", error);
