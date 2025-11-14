@@ -455,10 +455,10 @@ export default function FormResponsePage() {
             Thank You! 🙏
           </h1>
           <p className="text-lg text-gray-700 mb-4 relative z-10">
-            Your preferences have been recorded! We'll do our best to optimize everyone's experience for this Singapore 🇸🇬 and Taiwan 🇹🇼 GST journey.
+            Your preferences have been recorded! We will let you know when the results are out.
           </p>
           <p className="text-gray-600 relative z-10">
-            Looking forward to an amazing trip together! 🌟
+            Looking forward to an amazing trip to Singapore 🇸🇬 and Taiwan 🇹🇼 together! 🌟
           </p>
         </div>
       </div>
