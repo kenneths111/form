@@ -4,10 +4,11 @@ import { sql } from "@vercel/postgres";
 export async function GET() {
   try {
     // Get connection info (without exposing password)
-    const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL || "not set";
-    
+    const connectionString =
+      process.env.POSTGRES_URL || process.env.DATABASE_URL || "not set";
+
     // Parse the connection string to get host/database info (safely)
-    let dbInfo = "Connection string not found";
+    let dbInfo: string | { host: string; database: string; user: string } = "Connection string not found";
     if (connectionString !== "not set") {
       try {
         const url = new URL(connectionString);
@@ -35,16 +36,15 @@ export async function GET() {
         POSTGRES_URL: !!process.env.POSTGRES_URL,
         DATABASE_URL: !!process.env.DATABASE_URL,
         POSTGRES_HOST: !!process.env.POSTGRES_HOST,
-      }
+      },
     });
   } catch (error: any) {
     return NextResponse.json(
-      { 
+      {
         error: error.message,
-        environment: process.env.VERCEL_ENV || "local"
+        environment: process.env.VERCEL_ENV || "local",
       },
       { status: 500 }
     );
   }
 }
-
