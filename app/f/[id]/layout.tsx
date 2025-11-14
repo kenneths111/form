@@ -23,11 +23,20 @@ export async function generateMetadata({
           title: form.title,
           description: form.description || 'Fill out this form',
           type: 'website',
+          images: [
+            {
+              url: '/og-image.png',
+              width: 800,
+              height: 800,
+              alt: form.title,
+            },
+          ],
         },
         twitter: {
-          card: 'summary',
+          card: 'summary_large_image',
           title: form.title,
           description: form.description || 'Fill out this form',
+          images: ['/og-image.png'],
         },
       }
     }
