@@ -44,8 +44,29 @@ export default function FormResponsesPage() {
   const downloadCSV = () => {
     if (!form || responses.length === 0) return
 
-    // Create CSV header
-    const headers = ['Submission Time', ...form.questions.map(q => q.question)]
+    // Create CSV headers - for ranked questions, create multiple columns (Rank 1, Rank 2, etc.)
+    const headers: string[] = ['Submission Time']
+    const questionHeaders: { questionId: string; headers: string[] }[] = []
+    
+    form.questions.forEach(question => {
+      if (question.type === 'ranked' && question.options) {
+        // Create separate columns for each rank
+        const rankHeaders = question.options.map((_, idx) => 
+          `${question.question} - Rank ${idx + 1}`
+        )
+        headers.push(...rankHeaders)
+        questionHeaders.push({
+          questionId: question.id,
+          headers: rankHeaders
+        })
+      } else {
+        headers.push(question.question)
+        questionHeaders.push({
+          questionId: question.id,
+          headers: [question.question]
+        })
+      }
+    })
     
     // Create CSV rows
     const rows = responses.map(response => {
@@ -53,7 +74,16 @@ export default function FormResponsesPage() {
       
       form.questions.forEach(question => {
         const answer = response.answers[question.id]
-        if (Array.isArray(answer)) {
+        
+        if (question.type === 'ranked' && Array.isArray(answer)) {
+          // For ranked questions, put each rank in its own column
+          answer.forEach(item => row.push(item))
+          // Fill remaining columns if fewer items than expected
+          const remaining = (question.options?.length || 0) - answer.length
+          for (let i = 0; i < remaining; i++) {
+            row.push('')
+          }
+        } else if (Array.isArray(answer)) {
           row.push(answer.join(', '))
         } else {
           row.push(answer || '')
@@ -65,8 +95,8 @@ export default function FormResponsesPage() {
 
     // Combine headers and rows
     const csvContent = [
-      headers.map(h => `"${h}"`).join(','),
-      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      headers.map(h => `"${h.replace(/"/g, '""')}"`).join(','),
+      ...rows.map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
     ].join('\n')
 
     // Download
