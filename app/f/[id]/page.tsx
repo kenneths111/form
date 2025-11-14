@@ -18,6 +18,11 @@ function RankedQuestion({
   const [rankings, setRankings] = useState<string[]>([])
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
   const [dragOverItem, setDragOverItem] = useState<string | null>(null)
+  
+  // Mobile drag state
+  const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null)
+  const [touchDragY, setTouchDragY] = useState<number>(0)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     // Initialize rankings from answer or from options
@@ -59,6 +64,59 @@ function RankedQuestion({
     setDragOverItem(null)
   }
 
+  // Mobile touch drag handlers
+  const handleTouchStartMobile = (e: React.TouchEvent, index: number) => {
+    setTouchDragIndex(index)
+    setTouchDragY(0)
+  }
+
+  const handleTouchMoveMobile = (e: React.TouchEvent) => {
+    if (touchDragIndex === null || !containerRef.current) return
+    
+    const touch = e.touches[0]
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const touchY = touch.clientY - containerRect.top
+    
+    // Calculate which item we're hovering over
+    const items = Array.from(containerRef.current.children) as HTMLElement[]
+    let targetIndex = touchDragIndex
+    
+    for (let i = 0; i < items.length; i++) {
+      const itemRect = items[i].getBoundingClientRect()
+      const itemY = itemRect.top - containerRect.top + itemRect.height / 2
+      
+      if (touchY < itemY && i < touchDragIndex) {
+        targetIndex = i
+        break
+      } else if (touchY > itemY && i > touchDragIndex) {
+        targetIndex = i
+      }
+    }
+    
+    // If we've moved to a different position, reorder
+    if (targetIndex !== touchDragIndex) {
+      const newRankings = [...rankings]
+      const [movedItem] = newRankings.splice(touchDragIndex, 1)
+      newRankings.splice(targetIndex, 0, movedItem)
+      setRankings(newRankings)
+      onChange(question.id, newRankings)
+      setTouchDragIndex(targetIndex)
+    }
+    
+    // Update visual offset
+    const startItem = items[touchDragIndex]
+    if (startItem) {
+      const startRect = startItem.getBoundingClientRect()
+      const offsetY = touch.clientY - startRect.top - startRect.height / 2
+      setTouchDragY(offsetY)
+    }
+  }
+
+  const handleTouchEndMobile = () => {
+    setTouchDragIndex(null)
+    setTouchDragY(0)
+  }
+
   const moveUp = (index: number) => {
     if (index === 0) return
     const newRankings = [...rankings]
@@ -83,22 +141,33 @@ function RankedQuestion({
     <div className="space-y-2">
       <p className="text-xs text-primary-500 mb-3">
         <span className="hidden sm:inline">Drag to reorder or use arrow buttons.</span>
-        <span className="inline sm:hidden">Use arrow buttons to reorder.</span>
+        <span className="inline sm:hidden">Drag items or use arrow buttons to reorder.</span>
         {' '}Rank 1 is your top choice.
       </p>
-      {rankings.map((option, index) => (
-        <div
-          key={option}
-          draggable
-          onDragStart={(e) => handleDragStart(e, option)}
-          onDragOver={(e) => handleDragOver(e, option)}
-          onDragEnd={handleDragEnd}
-          className={`flex items-center gap-3 p-3 rounded-md border transition-all select-none ${
-            'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
-          } ${draggedItem === option ? 'opacity-40' : ''} ${
-            dragOverItem === option && draggedItem !== option ? 'border-accent-400 scale-105' : ''
-          }`}
-        >
+      <div ref={containerRef} className="space-y-2">
+        {rankings.map((option, index) => (
+          <div
+            key={option}
+            draggable
+            onDragStart={(e) => handleDragStart(e, option)}
+            onDragOver={(e) => handleDragOver(e, option)}
+            onDragEnd={handleDragEnd}
+            onTouchStart={(e) => handleTouchStartMobile(e, index)}
+            onTouchMove={(e) => handleTouchMoveMobile(e)}
+            onTouchEnd={handleTouchEndMobile}
+            style={{
+              transform: touchDragIndex === index ? `translateY(${touchDragY}px)` : undefined,
+              zIndex: touchDragIndex === index ? 50 : 1,
+              transition: touchDragIndex === index ? 'none' : 'transform 0.2s',
+            }}
+            className={`flex items-center gap-3 p-3 rounded-md border select-none ${
+              touchDragIndex === index
+                ? 'border-accent-500 bg-accent-50 shadow-lg'
+                : 'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
+            } ${draggedItem === option ? 'opacity-40' : ''} ${
+              dragOverItem === option && draggedItem !== option ? 'border-accent-400 scale-105' : ''
+            }`}
+          >
           <GripVertical className="w-4 h-4 text-primary-400 flex-shrink-0 cursor-grab active:cursor-grabbing" />
           <span className="font-medium text-primary-900 w-6 text-xs flex-shrink-0">
             {index + 1}
@@ -123,7 +192,8 @@ function RankedQuestion({
             </button>
           </div>
         </div>
-      ))}
+        ))}
+      </div>
     </div>
   )
 }
