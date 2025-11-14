@@ -81,16 +81,19 @@ function RankedQuestion({
       }
 
       const handleTouchMove = (e: TouchEvent) => {
-        if (!containerRef.current) return
+        if (!containerRef.current || !item) return
         
         // Prevent page scrolling
         e.preventDefault()
         
         const touch = e.touches[0]
         const currentY = touch.clientY
-        const offsetY = currentY - startY
         
-        // Update visual offset - keep it so card follows finger
+        // Calculate offset from the card's CURRENT position (not original start position)
+        const itemRect = item.getBoundingClientRect()
+        const offsetY = currentY - (itemRect.top + itemRect.height / 2)
+        
+        // Update visual offset
         setTouchDragY(offsetY)
         
         // Calculate target position
@@ -121,7 +124,6 @@ function RankedQuestion({
           setRankings(newRankings)
           onChange(question.id, newRankings)
           setTouchDragIndex(targetIndex)
-          // DON'T reset startY or offset - keep card under finger
         }
       }
 
