@@ -33,15 +33,6 @@ function RankedQuestion({
   const handleDragStart = (e: React.DragEvent, item: string) => {
     setDraggedItem(item)
     e.dataTransfer.effectAllowed = 'move'
-    // Prevent the ghost image from scrolling the page
-    if (e.dataTransfer.setDragImage) {
-      const div = document.createElement('div')
-      div.style.position = 'absolute'
-      div.style.top = '-9999px'
-      document.body.appendChild(div)
-      e.dataTransfer.setDragImage(div, 0, 0)
-      setTimeout(() => document.body.removeChild(div), 0)
-    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
