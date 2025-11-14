@@ -504,7 +504,7 @@ export default function FormResponsePage() {
               {isSubmitting ? 'Submitting... ✈️' : 'Submit My Preferences 🚀'}
             </button>
             <p className="text-center text-sm text-gray-500 mt-3">
-              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2024
+              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2026
             </p>
           </div>
         </form>
