@@ -70,81 +70,108 @@ function RankedQuestion({
   const [touchStartX, setTouchStartX] = useState<number | null>(null)
   const [isReorderMode, setIsReorderMode] = useState(false)
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    const touch = e.touches[0]
-    setTouchStartY(touch.clientY)
-    setTouchStartX(touch.clientX)
-    setTouchedIndex(index)
-    setIsReorderMode(false)
-    
-    // Enter reorder mode after holding for 300ms
-    holdTimerRef.current = setTimeout(() => {
-      setIsReorderMode(true)
-      // Haptic feedback on supported devices
-      if (navigator.vibrate) {
-        navigator.vibrate(50)
-      }
-    }, 300)
-  }
+  // Use native event listeners with passive: false to prevent scrolling
+  useEffect(() => {
+    const elements = itemRefs.current
 
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartY === null || touchStartX === null || touchedIndex === null) return
-    
-    const touch = e.touches[0]
-    const touchY = touch.clientY
-    const touchX = touch.clientX
-    const diffY = touchY - touchStartY
-    const diffX = touchX - touchStartX
-    
-    // If user moves horizontally too much, they're probably scrolling - cancel
-    if (Math.abs(diffX) > 15) {
-      if (holdTimerRef.current) {
-        clearTimeout(holdTimerRef.current)
+    const cleanupFns = elements.map((element, index) => {
+      if (!element) return () => {}
+
+      const handleTouchStart = (e: TouchEvent) => {
+        const touch = e.touches[0]
+        setTouchStartY(touch.clientY)
+        setTouchStartX(touch.clientX)
+        setTouchedIndex(index)
+        setIsReorderMode(false)
+        
+        // Enter reorder mode after holding for 300ms
+        holdTimerRef.current = setTimeout(() => {
+          setIsReorderMode(true)
+          // Haptic feedback on supported devices
+          if (navigator.vibrate) {
+            navigator.vibrate(50)
+          }
+        }, 300)
       }
-      setIsReorderMode(false)
-      return
-    }
-    
-    // Only reorder if in reorder mode (held for 300ms)
-    if (!isReorderMode) {
-      // If moved too much before hold completed, cancel the hold
-      if (Math.abs(diffY) > 10) {
+
+      const handleTouchMove = (e: TouchEvent) => {
+        if (touchStartY === null || touchStartX === null || touchedIndex === null) return
+        
+        const touch = e.touches[0]
+        const touchY = touch.clientY
+        const touchX = touch.clientX
+        const diffY = touchY - touchStartY
+        const diffX = touchX - touchStartX
+        
+        // If user moves horizontally too much, they're probably scrolling - cancel
+        if (Math.abs(diffX) > 15) {
+          if (holdTimerRef.current) {
+            clearTimeout(holdTimerRef.current)
+          }
+          setIsReorderMode(false)
+          return
+        }
+        
+        // Only reorder if in reorder mode (held for 300ms)
+        if (!isReorderMode) {
+          // If moved too much before hold completed, cancel the hold
+          if (Math.abs(diffY) > 10) {
+            if (holdTimerRef.current) {
+              clearTimeout(holdTimerRef.current)
+            }
+          }
+          return
+        }
+        
+        // Prevent page scrolling when in reorder mode
+        e.preventDefault()
+        
+        // Threshold for moving up or down (smaller now since we're in deliberate mode)
+        if (Math.abs(diffY) > 50) {
+          if (diffY < 0 && touchedIndex > 0) {
+            // Swiped up - move item up
+            moveUp(touchedIndex)
+            setTouchStartY(touchY)
+            setTouchedIndex(touchedIndex - 1)
+          } else if (diffY > 0 && touchedIndex < rankings.length - 1) {
+            // Swiped down - move item down
+            moveDown(touchedIndex)
+            setTouchStartY(touchY)
+            setTouchedIndex(touchedIndex + 1)
+          }
+        }
+      }
+
+      const handleTouchEnd = () => {
         if (holdTimerRef.current) {
           clearTimeout(holdTimerRef.current)
         }
+        setTouchStartY(null)
+        setTouchStartX(null)
+        setTouchedIndex(null)
+        setIsReorderMode(false)
       }
-      return
-    }
-    
-    // Prevent page scrolling when in reorder mode
-    e.preventDefault()
-    
-    // Threshold for moving up or down (smaller now since we're in deliberate mode)
-    if (Math.abs(diffY) > 50) {
-      if (diffY < 0 && touchedIndex > 0) {
-        // Swiped up - move item up
-        moveUp(touchedIndex)
-        setTouchStartY(touchY)
-        setTouchedIndex(touchedIndex - 1)
-      } else if (diffY > 0 && touchedIndex < rankings.length - 1) {
-        // Swiped down - move item down
-        moveDown(touchedIndex)
-        setTouchStartY(touchY)
-        setTouchedIndex(touchedIndex + 1)
-      }
-    }
-  }
 
-  const handleTouchEnd = () => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current)
+      element.addEventListener('touchstart', handleTouchStart, { passive: true })
+      element.addEventListener('touchmove', handleTouchMove, { passive: false })
+      element.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+      return () => {
+        element.removeEventListener('touchstart', handleTouchStart)
+        element.removeEventListener('touchmove', handleTouchMove)
+        element.removeEventListener('touchend', handleTouchEnd)
+      }
+    })
+
+    return () => {
+      cleanupFns.forEach(cleanup => cleanup())
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current)
+      }
     }
-    setTouchStartY(null)
-    setTouchStartX(null)
-    setTouchedIndex(null)
-    setIsReorderMode(false)
-  }
+  }, [rankings.length, touchStartY, touchStartX, touchedIndex, isReorderMode])
 
   const moveUp = (index: number) => {
     if (index === 0) return
@@ -176,13 +203,11 @@ function RankedQuestion({
       {rankings.map((option, index) => (
         <div
           key={option}
+          ref={(el) => (itemRefs.current[index] = el)}
           draggable
           onDragStart={(e) => handleDragStart(e, option)}
           onDragOver={handleDragOver}
           onDrop={(e) => handleDrop(e, option)}
-          onTouchStart={(e) => handleTouchStart(e, index)}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
           className={`flex items-center gap-3 p-3 rounded-md border transition-all select-none ${
             touchedIndex === index && isReorderMode
               ? 'border-accent-500 bg-accent-50 shadow-sm' 
