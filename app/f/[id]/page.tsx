@@ -156,10 +156,10 @@ function RankedQuestion({
 
   return (
     <div className="space-y-2">
-      <p className="text-sm text-gray-600 mb-3">
-        <span className="hidden sm:inline">Drag items to reorder, or use the arrow buttons.</span>
-        <span className="inline sm:hidden">Hold and swipe up/down to reorder, or tap the arrow buttons.</span>
-        {' '}#1 is your top choice.
+      <p className="text-xs text-primary-500 mb-3">
+        <span className="hidden sm:inline">Drag to reorder or use arrow buttons.</span>
+        <span className="inline sm:hidden">Hold and swipe or use arrows.</span>
+        {' '}Rank 1 is your top choice.
       </p>
       {rankings.map((option, index) => (
         <div
@@ -171,35 +171,35 @@ function RankedQuestion({
           onTouchStart={(e) => handleTouchStart(e, index)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border-2 rounded-lg transition-all select-none ${
+          className={`flex items-center gap-3 p-3 rounded-md border transition-all select-none ${
             touchedIndex === index && isReorderMode
-              ? 'border-primary-500 shadow-lg scale-105 bg-primary-50' 
+              ? 'border-accent-500 bg-accent-50 shadow-sm' 
               : touchedIndex === index
-              ? 'border-primary-300'
-              : 'border-gray-300 hover:border-primary-400'
-          } ${draggedItem === option ? 'opacity-50' : ''}`}
+              ? 'border-primary-300 bg-primary-50'
+              : 'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
+          } ${draggedItem === option ? 'opacity-40' : ''}`}
         >
-          <GripVertical className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
-          <span className="font-semibold text-primary-600 w-6 sm:w-8 text-sm sm:text-base flex-shrink-0">
-            #{index + 1}
+          <GripVertical className="w-4 h-4 text-primary-400 flex-shrink-0 cursor-grab active:cursor-grabbing" />
+          <span className="font-medium text-primary-900 w-6 text-xs flex-shrink-0">
+            {index + 1}
           </span>
-          <span className="flex-1 text-sm sm:text-base break-words">{option}</span>
+          <span className="flex-1 text-sm text-primary-700 break-words">{option}</span>
           <div className="flex gap-1 flex-shrink-0">
             <button
               type="button"
               onClick={() => moveUp(index)}
               disabled={index === 0}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed rounded touch-manipulation"
+              className="w-7 h-7 text-xs bg-white border border-primary-200 rounded hover:bg-primary-50 hover:border-primary-300 active:bg-primary-100 disabled:opacity-20 disabled:cursor-not-allowed transition-colors touch-manipulation"
             >
-              ▲
+              ↑
             </button>
             <button
               type="button"
               onClick={() => moveDown(index)}
               disabled={index === rankings.length - 1}
-              className="px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed rounded touch-manipulation"
+              className="w-7 h-7 text-xs bg-white border border-primary-200 rounded hover:bg-primary-50 hover:border-primary-300 active:bg-primary-100 disabled:opacity-20 disabled:cursor-not-allowed transition-colors touch-manipulation"
             >
-              ▼
+              ↓
             </button>
           </div>
         </div>
@@ -297,8 +297,9 @@ export default function FormResponsePage() {
             type="text"
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
             required={question.required}
+            placeholder="Your answer"
           />
         )
 
@@ -308,8 +309,9 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all resize-none text-sm"
             required={question.required}
+            placeholder="Your answer"
           />
         )
 
@@ -319,8 +321,9 @@ export default function FormResponsePage() {
             type="email"
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
             required={question.required}
+            placeholder="your@email.com"
           />
         )
 
@@ -330,8 +333,9 @@ export default function FormResponsePage() {
             type="tel"
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
             required={question.required}
+            placeholder="Your phone number"
           />
         )
 
@@ -341,7 +345,7 @@ export default function FormResponsePage() {
             type="date"
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
             required={question.required}
           />
         )
@@ -352,7 +356,7 @@ export default function FormResponsePage() {
             {question.options?.map((option, index) => (
               <label
                 key={index}
-                className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 bg-primary-50 border border-primary-200 rounded-md cursor-pointer hover:bg-primary-100 hover:border-primary-300 transition-colors"
               >
                 <input
                   type="radio"
@@ -360,10 +364,10 @@ export default function FormResponsePage() {
                   value={option}
                   checked={answer === option}
                   onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-                  className="w-4 h-4 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 text-accent-600 border-primary-300 focus:ring-accent-500"
                   required={question.required}
                 />
-                <span>{option}</span>
+                <span className="text-sm text-primary-700">{option}</span>
               </label>
             ))}
           </div>
@@ -375,7 +379,7 @@ export default function FormResponsePage() {
             {question.options?.map((option, index) => (
               <label
                 key={index}
-                className="flex items-center gap-3 p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
+                className="flex items-center gap-3 px-3 py-2.5 bg-primary-50 border border-primary-200 rounded-md cursor-pointer hover:bg-primary-100 hover:border-primary-300 transition-colors"
               >
                 <input
                   type="checkbox"
@@ -383,9 +387,9 @@ export default function FormResponsePage() {
                   onChange={(e) =>
                     handleCheckboxChange(question.id, option, e.target.checked)
                   }
-                  className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+                  className="w-4 h-4 text-accent-600 border-primary-300 focus:ring-accent-500 rounded"
                 />
-                <span>{option}</span>
+                <span className="text-sm text-primary-700">{option}</span>
               </label>
             ))}
           </div>
@@ -396,10 +400,10 @@ export default function FormResponsePage() {
           <select
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
             required={question.required}
           >
-            <option value="">Select an option...</option>
+            <option value="">Choose an option...</option>
             {question.options?.map((option, index) => (
               <option key={index} value={option}>
                 {option}
@@ -440,54 +444,63 @@ export default function FormResponsePage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-12 max-w-lg text-center relative overflow-hidden">
+      <div className="min-h-screen bg-primary-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-lg shadow-sm border border-primary-200 p-12 max-w-lg text-center">
           {/* Decorative elements */}
-          <div className="absolute top-4 left-4 text-4xl opacity-20">🇸🇬</div>
-          <div className="absolute top-4 right-4 text-4xl opacity-20">🇹🇼</div>
-          <div className="absolute bottom-4 left-8 text-2xl opacity-10">✈️</div>
-          <div className="absolute bottom-4 right-8 text-2xl opacity-10">🎓</div>
-          
-          <div className="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 relative z-10">
-            <CheckCircle className="w-12 h-12 text-green-600" />
+          <div className="flex justify-center gap-3 mb-6 text-2xl opacity-20">
+            🇸🇬 🇹🇼
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4 relative z-10">
-            Thank You! 🙏
+          
+          <div className="w-16 h-16 bg-accent-600 rounded-lg flex items-center justify-center mx-auto mb-6">
+            <CheckCircle className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-2xl font-semibold text-primary-900 mb-4">
+            Thank You!
           </h1>
-          <p className="text-lg text-gray-700 mb-4 relative z-10">
+          <p className="text-sm text-primary-600 mb-3 leading-relaxed">
             Your preferences have been recorded! We will let you know when the results are out.
           </p>
-          <p className="text-gray-600 relative z-10">
-            Looking forward to an amazing trip to Singapore 🇸🇬 and Taiwan 🇹🇼 together! 🌟
+          <p className="text-sm text-primary-500 leading-relaxed">
+            Looking forward to an amazing trip to Singapore and Taiwan together.
           </p>
+          <div className="mt-8 pt-6 border-t border-primary-100">
+            <p className="text-xs text-primary-400">
+              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2026
+            </p>
+          </div>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white py-12">
+    <div className="min-h-screen bg-primary-50 py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Form Header with decorations */}
-          <div className="bg-white rounded-lg shadow-md p-8 border-t-8 border-primary-500 relative overflow-hidden">
+          <div className="bg-white rounded-lg p-8 shadow-sm border border-primary-200">
             {/* Decorative flags */}
-            <div className="absolute top-2 right-2 text-3xl opacity-20 flex gap-2">
-              🇸🇬 🇹🇼
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex-1">
+                <h1 className="text-2xl font-semibold text-primary-900 mb-2">{form.title}</h1>
+                {form.description && (
+                  <p className="text-primary-600 text-sm whitespace-pre-wrap">{form.description}</p>
+                )}
+              </div>
+              <div className="text-xl opacity-30 flex gap-1 ml-4">
+                🇸🇬 🇹🇼
+              </div>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">{form.title}</h1>
-            {form.description && (
-              <p className="text-gray-600 whitespace-pre-wrap">{form.description}</p>
-            )}
           </div>
 
           {/* Questions */}
           {form.questions.map((question, index) => (
-            <div key={question.id} className="bg-white rounded-lg shadow-md p-6">
+            <div key={question.id} className="bg-white rounded-lg p-6 shadow-sm border border-primary-200">
               <label className="block mb-4">
-                <span className="text-lg font-medium text-gray-900">
-                  {index + 1}. {question.question}
-                  {question.required && <span className="text-red-500 ml-1">*</span>}
+                <span className="text-sm font-medium text-primary-900 flex items-center gap-2">
+                  <span className="text-primary-400">{index + 1}.</span>
+                  {question.question}
+                  {question.required && <span className="text-red-500">*</span>}
                 </span>
               </label>
               {renderQuestion(question)}
@@ -495,15 +508,15 @@ export default function FormResponsePage() {
           ))}
 
           {/* Submit Button */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="bg-white rounded-lg p-6 shadow-sm border border-primary-200">
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:bg-gray-400 font-medium text-lg"
+              className="w-full px-6 py-3 bg-primary-900 text-white rounded-md hover:bg-primary-800 transition-colors disabled:bg-primary-300 font-medium shadow-sm"
             >
-              {isSubmitting ? 'Submitting... ✈️' : 'Submit My Preferences 🚀'}
+              {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
-            <p className="text-center text-sm text-gray-500 mt-3">
+            <p className="text-center text-xs text-primary-400 mt-4">
               Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2026
             </p>
           </div>
