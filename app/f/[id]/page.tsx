@@ -203,7 +203,9 @@ function RankedQuestion({
       {rankings.map((option, index) => (
         <div
           key={option}
-          ref={(el) => (itemRefs.current[index] = el)}
+          ref={(el) => {
+            itemRefs.current[index] = el
+          }}
           draggable
           onDragStart={(e) => handleDragStart(e, option)}
           onDragOver={handleDragOver}
