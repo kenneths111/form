@@ -446,13 +446,10 @@ export default function FormResponsePage() {
     return (
       <div className="min-h-screen bg-primary-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-sm border border-primary-200 p-12 max-w-lg text-center">
-          {/* Decorative elements */}
-          <div className="flex justify-center gap-3 mb-6 text-2xl opacity-20">
-            🇸🇬 🇹🇼
-          </div>
-          
-          <div className="w-16 h-16 bg-accent-600 rounded-lg flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-10 h-10 text-white" />
+          <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
           </div>
           <h1 className="text-2xl font-semibold text-primary-900 mb-4">
             Thank You!
@@ -465,7 +462,7 @@ export default function FormResponsePage() {
           </p>
           <div className="mt-8 pt-6 border-t border-primary-100">
             <p className="text-xs text-primary-400">
-              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2026
+              GST 2026
             </p>
           </div>
         </div>
@@ -477,20 +474,12 @@ export default function FormResponsePage() {
     <div className="min-h-screen bg-primary-50 py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Header with decorations */}
+          {/* Form Header */}
           <div className="bg-white rounded-lg p-8 shadow-sm border border-primary-200">
-            {/* Decorative flags */}
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex-1">
-                <h1 className="text-2xl font-semibold text-primary-900 mb-2">{form.title}</h1>
-                {form.description && (
-                  <p className="text-primary-600 text-sm whitespace-pre-wrap">{form.description}</p>
-                )}
-              </div>
-              <div className="text-xl opacity-30 flex gap-1 ml-4">
-                🇸🇬 🇹🇼
-              </div>
-            </div>
+            <h1 className="text-2xl font-semibold text-primary-900 mb-2">{form.title}</h1>
+            {form.description && (
+              <p className="text-primary-600 text-sm whitespace-pre-wrap">{form.description}</p>
+            )}
           </div>
 
           {/* Questions */}
@@ -517,7 +506,7 @@ export default function FormResponsePage() {
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </button>
             <p className="text-center text-xs text-primary-400 mt-4">
-              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2026
+              GST 2026
             </p>
           </div>
         </form>
