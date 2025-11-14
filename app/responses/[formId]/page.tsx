@@ -1,22 +1,38 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Download } from 'lucide-react'
 import { Form, Response } from '@/lib/types'
 
 export default function FormResponsesPage() {
+  const router = useRouter()
   const params = useParams()
   const formId = params.formId as string
   
   const [form, setForm] = useState<Form | null>(null)
   const [responses, setResponses] = useState<Response[]>([])
   const [loading, setLoading] = useState(true)
+  const [isAuthorized, setIsAuthorized] = useState(false)
 
   useEffect(() => {
-    fetchData()
-  }, [formId])
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const response = await fetch('/api/auth/verify')
+      if (response.ok) {
+        setIsAuthorized(true)
+        fetchData()
+      } else {
+        router.push('/responses/auth')
+      }
+    } catch (error) {
+      router.push('/responses/auth')
+    }
+  }
 
   const fetchData = async () => {
     try {
@@ -109,12 +125,12 @@ export default function FormResponsesPage() {
     window.URL.revokeObjectURL(url)
   }
 
-  if (loading) {
+  if (!isAuthorized || loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading responses...</p>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     )
@@ -134,11 +150,11 @@ export default function FormResponsesPage() {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4 max-w-7xl">
         <Link
-          href="/responses"
+          href="/"
           className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Back to All Forms
+          Back to Home
         </Link>
 
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
@@ -237,4 +253,3 @@ export default function FormResponsesPage() {
     </div>
   )
 }
-

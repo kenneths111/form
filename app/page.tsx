@@ -66,7 +66,7 @@ export default function Home() {
           </Link>
 
           <Link
-            href="/responses/default-trip-form"
+            href="/responses/auth"
             className="group bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 p-8 border-2 border-transparent hover:border-primary-500"
           >
             <div className="flex flex-col items-center text-center">
