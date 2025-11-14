@@ -30,15 +30,27 @@ function RankedQuestion({
   }, [question.options, answer])
 
   // Desktop drag handlers
-  const handleDragStart = (item: string) => {
+  const handleDragStart = (e: React.DragEvent, item: string) => {
     setDraggedItem(item)
+    e.dataTransfer.effectAllowed = 'move'
+    // Prevent the ghost image from scrolling the page
+    if (e.dataTransfer.setDragImage) {
+      const div = document.createElement('div')
+      div.style.position = 'absolute'
+      div.style.top = '-9999px'
+      document.body.appendChild(div)
+      e.dataTransfer.setDragImage(div, 0, 0)
+      setTimeout(() => document.body.removeChild(div), 0)
+    }
   }
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
   }
 
-  const handleDrop = (targetItem: string) => {
+  const handleDrop = (e: React.DragEvent, targetItem: string) => {
+    e.preventDefault()
     if (!draggedItem) return
     
     const newRankings = [...rankings]
@@ -165,9 +177,9 @@ function RankedQuestion({
         <div
           key={option}
           draggable
-          onDragStart={() => handleDragStart(option)}
+          onDragStart={(e) => handleDragStart(e, option)}
           onDragOver={handleDragOver}
-          onDrop={() => handleDrop(option)}
+          onDrop={(e) => handleDrop(e, option)}
           onTouchStart={(e) => handleTouchStart(e, index)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -217,6 +229,7 @@ export default function FormResponsePage() {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [validationError, setValidationError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchForm()
@@ -240,14 +253,29 @@ export default function FormResponsePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+    setValidationError(null)
+
     // Validate required fields
     if (form) {
-      for (const question of form.questions) {
-        if (question.required && !answers[question.id]) {
-          alert(`Please answer: ${question.question}`)
-          return
+      const missingFields: string[] = []
+      form.questions.forEach((question, index) => {
+        if (question.required) {
+          const answer = answers[question.id]
+          if (!answer || (Array.isArray(answer) && answer.length === 0) || answer === '') {
+            missingFields.push(`Question ${index + 1}: ${question.question}`)
+          }
         }
+      })
+
+      if (missingFields.length > 0) {
+        setValidationError(
+          missingFields.length === 1
+            ? `Please answer the required question: ${missingFields[0]}`
+            : `Please answer all required questions (${missingFields.length} missing)`
+        )
+        // Scroll to top to see the error
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+        return
       }
     }
 
@@ -266,10 +294,11 @@ export default function FormResponsePage() {
       if (response.ok) {
         setSubmitted(true)
       } else {
-        alert('Failed to submit response')
+        setValidationError('Failed to submit response. Please try again.')
       }
     } catch (error) {
-      alert('An error occurred')
+      console.error('Error submitting response:', error)
+      setValidationError('Error submitting response. Please check your connection.')
     } finally {
       setIsSubmitting(false)
     }
@@ -298,7 +327,6 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
-            required={question.required}
             placeholder="Your answer"
           />
         )
@@ -310,7 +338,6 @@ export default function FormResponsePage() {
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             rows={4}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all resize-none text-sm"
-            required={question.required}
             placeholder="Your answer"
           />
         )
@@ -322,7 +349,6 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
-            required={question.required}
             placeholder="your@email.com"
           />
         )
@@ -334,7 +360,6 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
-            required={question.required}
             placeholder="Your phone number"
           />
         )
@@ -346,7 +371,6 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
-            required={question.required}
           />
         )
 
@@ -365,7 +389,6 @@ export default function FormResponsePage() {
                   checked={answer === option}
                   onChange={(e) => handleAnswerChange(question.id, e.target.value)}
                   className="w-4 h-4 text-accent-600 border-primary-300 focus:ring-accent-500"
-                  required={question.required}
                 />
                 <span className="text-sm text-primary-700">{option}</span>
               </label>
@@ -401,7 +424,6 @@ export default function FormResponsePage() {
             value={(answer as string) || ''}
             onChange={(e) => handleAnswerChange(question.id, e.target.value)}
             className="w-full px-3 py-2 bg-primary-50 border border-primary-200 rounded-md focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent transition-all text-sm"
-            required={question.required}
           >
             <option value="">Choose an option...</option>
             {question.options?.map((option, index) => (
@@ -474,6 +496,28 @@ export default function FormResponsePage() {
     <div className="min-h-screen bg-primary-50 py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Validation Error Message */}
+          {validationError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-red-900 mb-1">Unable to submit</h3>
+                <p className="text-sm text-red-700">{validationError}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setValidationError(null)}
+                className="text-red-400 hover:text-red-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           {/* Form Header */}
           <div className="bg-white rounded-lg p-8 shadow-sm border border-primary-200">
             <h1 className="text-2xl font-semibold text-primary-900 mb-2">{form.title}</h1>
