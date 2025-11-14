@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { FileText, Trash2, ExternalLink, ArrowLeft, Copy, Check } from 'lucide-react'
+import { FileText, ExternalLink, ArrowLeft, Copy, Check } from 'lucide-react'
 import { Form } from '@/lib/types'
 
 export default function FormsPage() {
@@ -23,26 +23,6 @@ export default function FormsPage() {
       alert('Failed to fetch forms')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const deleteForm = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this form and all its responses?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/forms/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        setForms(forms.filter(f => f.id !== id))
-      } else {
-        alert('Failed to delete form')
-      }
-    } catch (error) {
-      alert('An error occurred')
     }
   }
 
@@ -111,12 +91,6 @@ export default function FormsPage() {
                 <div className="p-6">
                   <div className="flex items-start justify-between mb-4">
                     <FileText className="w-8 h-8 text-primary-600" />
-                    <button
-                      onClick={() => deleteForm(form.id)}
-                      className="text-gray-400 hover:text-red-500"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
                   </div>
                   
                   <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">
