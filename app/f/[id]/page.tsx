@@ -23,6 +23,7 @@ function RankedQuestion({
   const [touchDragIndex, setTouchDragIndex] = useState<number | null>(null)
   const [touchDragY, setTouchDragY] = useState<number>(0)
   const containerRef = useRef<HTMLDivElement>(null)
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
     // Initialize rankings from answer or from options
@@ -64,58 +65,85 @@ function RankedQuestion({
     setDragOverItem(null)
   }
 
-  // Mobile touch drag handlers
-  const handleTouchStartMobile = (e: React.TouchEvent, index: number) => {
-    setTouchDragIndex(index)
-    setTouchDragY(0)
-  }
+  // Mobile touch drag with native event listeners
+  useEffect(() => {
+    const items = itemRefs.current
 
-  const handleTouchMoveMobile = (e: React.TouchEvent) => {
-    if (touchDragIndex === null || !containerRef.current) return
-    
-    const touch = e.touches[0]
-    const containerRect = containerRef.current.getBoundingClientRect()
-    const touchY = touch.clientY - containerRect.top
-    
-    // Calculate which item we're hovering over
-    const items = Array.from(containerRef.current.children) as HTMLElement[]
-    let targetIndex = touchDragIndex
-    
-    for (let i = 0; i < items.length; i++) {
-      const itemRect = items[i].getBoundingClientRect()
-      const itemY = itemRect.top - containerRect.top + itemRect.height / 2
-      
-      if (touchY < itemY && i < touchDragIndex) {
-        targetIndex = i
-        break
-      } else if (touchY > itemY && i > touchDragIndex) {
-        targetIndex = i
+    const cleanupFns = items.map((item, index) => {
+      if (!item) return () => {}
+
+      let startY = 0
+
+      const handleTouchStart = (e: TouchEvent) => {
+        startY = e.touches[0].clientY
+        setTouchDragIndex(index)
+        setTouchDragY(0)
       }
-    }
-    
-    // If we've moved to a different position, reorder
-    if (targetIndex !== touchDragIndex) {
-      const newRankings = [...rankings]
-      const [movedItem] = newRankings.splice(touchDragIndex, 1)
-      newRankings.splice(targetIndex, 0, movedItem)
-      setRankings(newRankings)
-      onChange(question.id, newRankings)
-      setTouchDragIndex(targetIndex)
-    }
-    
-    // Update visual offset
-    const startItem = items[touchDragIndex]
-    if (startItem) {
-      const startRect = startItem.getBoundingClientRect()
-      const offsetY = touch.clientY - startRect.top - startRect.height / 2
-      setTouchDragY(offsetY)
-    }
-  }
 
-  const handleTouchEndMobile = () => {
-    setTouchDragIndex(null)
-    setTouchDragY(0)
-  }
+      const handleTouchMove = (e: TouchEvent) => {
+        if (!containerRef.current) return
+        
+        // Prevent page scrolling
+        e.preventDefault()
+        
+        const touch = e.touches[0]
+        const currentY = touch.clientY
+        const offsetY = currentY - startY
+        
+        // Update visual offset
+        setTouchDragY(offsetY)
+        
+        // Calculate target position
+        const containerRect = containerRef.current.getBoundingClientRect()
+        const touchY = currentY - containerRect.top
+        
+        const allItems = Array.from(containerRef.current.children) as HTMLElement[]
+        let targetIndex = index
+        
+        for (let i = 0; i < allItems.length; i++) {
+          const itemRect = allItems[i].getBoundingClientRect()
+          const itemMiddle = itemRect.top - containerRect.top + itemRect.height / 2
+          
+          if (touchY < itemMiddle && i < index) {
+            targetIndex = i
+            break
+          } else if (touchY > itemMiddle && i > index) {
+            targetIndex = i
+          }
+        }
+        
+        // Reorder if position changed
+        if (targetIndex !== index && targetIndex !== touchDragIndex) {
+          const newRankings = [...rankings]
+          const currentIndex = touchDragIndex !== null ? touchDragIndex : index
+          const [movedItem] = newRankings.splice(currentIndex, 1)
+          newRankings.splice(targetIndex, 0, movedItem)
+          setRankings(newRankings)
+          onChange(question.id, newRankings)
+          setTouchDragIndex(targetIndex)
+          startY = currentY
+          setTouchDragY(0)
+        }
+      }
+
+      const handleTouchEnd = () => {
+        setTouchDragIndex(null)
+        setTouchDragY(0)
+      }
+
+      item.addEventListener('touchstart', handleTouchStart, { passive: true })
+      item.addEventListener('touchmove', handleTouchMove, { passive: false }) // KEY: passive: false
+      item.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+      return () => {
+        item.removeEventListener('touchstart', handleTouchStart)
+        item.removeEventListener('touchmove', handleTouchMove)
+        item.removeEventListener('touchend', handleTouchEnd)
+      }
+    })
+
+    return () => cleanupFns.forEach(cleanup => cleanup())
+  }, [rankings, touchDragIndex, question.id, onChange])
 
   const moveUp = (index: number) => {
     if (index === 0) return
@@ -148,17 +176,16 @@ function RankedQuestion({
         {rankings.map((option, index) => (
           <div
             key={option}
+            ref={(el) => { itemRefs.current[index] = el }}
             draggable
             onDragStart={(e) => handleDragStart(e, option)}
             onDragOver={(e) => handleDragOver(e, option)}
             onDragEnd={handleDragEnd}
-            onTouchStart={(e) => handleTouchStartMobile(e, index)}
-            onTouchMove={(e) => handleTouchMoveMobile(e)}
-            onTouchEnd={handleTouchEndMobile}
             style={{
               transform: touchDragIndex === index ? `translateY(${touchDragY}px)` : undefined,
               zIndex: touchDragIndex === index ? 50 : 1,
               transition: touchDragIndex === index ? 'none' : 'transform 0.2s',
+              touchAction: 'none', // CSS hint to prevent scrolling
             }}
             className={`flex items-center gap-3 p-3 rounded-md border select-none ${
               touchDragIndex === index
