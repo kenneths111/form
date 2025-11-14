@@ -10,7 +10,10 @@ export async function seedDefaultForm() {
 
     if (existingForms.length > 0) {
       console.log("Default form already exists, skipping seed");
-      return { message: "Default form already exists", formId: "default-trip-form" };
+      return {
+        message: "Default form already exists",
+        formId: "default-trip-form",
+      };
     }
 
     // Create the default form with your specific questions
@@ -27,7 +30,8 @@ export async function seedDefaultForm() {
       {
         id: nanoid(),
         type: "ranked",
-        question: "Please rank the following options according to your preference, with 1 being your top choice.",
+        question:
+          "Please rank the following options according to your preference, with 1 being your top choice.",
         required: true,
         options: [
           "Social Media Manager (3 pax)",
@@ -52,7 +56,8 @@ export async function seedDefaultForm() {
       {
         id: nanoid(),
         type: "long_text",
-        question: "If you have anything else to add or share about the reasons for your ranked preferences :)",
+        question:
+          "If you have anything else to add or share about the reasons for your ranked preferences :)",
         required: false,
       },
     ];
@@ -61,8 +66,8 @@ export async function seedDefaultForm() {
       INSERT INTO forms (id, title, description, questions, created_at, updated_at)
       VALUES (
         ${formId},
-        ${"Trip Preferences Survey"},
-        ${"Please help us understand your preferences for the upcoming trip activities and sessions."},
+        ${"Sign up for GST roles"},
+        ${"We will try to optimize for everyone's preferences."},
         ${JSON.stringify(questions)}::jsonb,
         ${now},
         ${now}
@@ -70,14 +75,13 @@ export async function seedDefaultForm() {
     `;
 
     console.log("Default form seeded successfully!");
-    return { 
-      message: "Default form created successfully", 
+    return {
+      message: "Default form created successfully",
       formId: formId,
-      formUrl: `/f/${formId}`
+      formUrl: `/f/${formId}`,
     };
   } catch (error) {
     console.error("Error seeding default form:", error);
     throw error;
   }
 }
-

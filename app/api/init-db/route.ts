@@ -6,13 +6,13 @@ export async function GET() {
   try {
     // Initialize database tables
     await initDatabase();
-    
+
     // Seed the default form
     const seedResult = await seedDefaultForm();
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       message: "Database initialized and seeded successfully",
-      ...seedResult
+      ...seedResult,
     });
   } catch (error) {
     console.error("Database initialization error:", error);
