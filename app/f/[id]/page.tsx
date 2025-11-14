@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Form, Question } from '@/lib/types'
 import { CheckCircle, GripVertical } from 'lucide-react'
@@ -54,26 +54,68 @@ function RankedQuestion({
     setDraggedItem(null)
   }
 
-  // Mobile touch handlers
+  // Mobile touch handlers with scroll detection
+  const [touchStartX, setTouchStartX] = useState<number | null>(null)
+  const [isReorderMode, setIsReorderMode] = useState(false)
+  const holdTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    setTouchStartY(e.touches[0].clientY)
+    const touch = e.touches[0]
+    setTouchStartY(touch.clientY)
+    setTouchStartX(touch.clientX)
     setTouchedIndex(index)
+    setIsReorderMode(false)
+    
+    // Enter reorder mode after holding for 300ms
+    holdTimerRef.current = setTimeout(() => {
+      setIsReorderMode(true)
+      // Haptic feedback on supported devices
+      if (navigator.vibrate) {
+        navigator.vibrate(50)
+      }
+    }, 300)
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartY === null || touchedIndex === null) return
+    if (touchStartY === null || touchStartX === null || touchedIndex === null) return
     
-    const touchY = e.touches[0].clientY
-    const diff = touchY - touchStartY
+    const touch = e.touches[0]
+    const touchY = touch.clientY
+    const touchX = touch.clientX
+    const diffY = touchY - touchStartY
+    const diffX = touchX - touchStartX
     
-    // Threshold for moving up or down
-    if (Math.abs(diff) > 60) {
-      if (diff < 0 && touchedIndex > 0) {
+    // If user moves horizontally too much, they're probably scrolling - cancel
+    if (Math.abs(diffX) > 15) {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current)
+      }
+      setIsReorderMode(false)
+      return
+    }
+    
+    // Only reorder if in reorder mode (held for 300ms)
+    if (!isReorderMode) {
+      // If moved too much before hold completed, cancel the hold
+      if (Math.abs(diffY) > 10) {
+        if (holdTimerRef.current) {
+          clearTimeout(holdTimerRef.current)
+        }
+      }
+      return
+    }
+    
+    // Prevent page scrolling when in reorder mode
+    e.preventDefault()
+    
+    // Threshold for moving up or down (smaller now since we're in deliberate mode)
+    if (Math.abs(diffY) > 50) {
+      if (diffY < 0 && touchedIndex > 0) {
         // Swiped up - move item up
         moveUp(touchedIndex)
         setTouchStartY(touchY)
         setTouchedIndex(touchedIndex - 1)
-      } else if (diff > 0 && touchedIndex < rankings.length - 1) {
+      } else if (diffY > 0 && touchedIndex < rankings.length - 1) {
         // Swiped down - move item down
         moveDown(touchedIndex)
         setTouchStartY(touchY)
@@ -83,8 +125,13 @@ function RankedQuestion({
   }
 
   const handleTouchEnd = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current)
+    }
     setTouchStartY(null)
+    setTouchStartX(null)
     setTouchedIndex(null)
+    setIsReorderMode(false)
   }
 
   const moveUp = (index: number) => {
@@ -111,7 +158,7 @@ function RankedQuestion({
     <div className="space-y-2">
       <p className="text-sm text-gray-600 mb-3">
         <span className="hidden sm:inline">Drag items to reorder, or use the arrow buttons.</span>
-        <span className="inline sm:hidden">Swipe up/down to reorder, or tap the arrow buttons.</span>
+        <span className="inline sm:hidden">Hold and swipe up/down to reorder, or tap the arrow buttons.</span>
         {' '}#1 is your top choice.
       </p>
       {rankings.map((option, index) => (
@@ -124,9 +171,11 @@ function RankedQuestion({
           onTouchStart={(e) => handleTouchStart(e, index)}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border-2 rounded-lg transition-all touch-none select-none ${
-            touchedIndex === index 
-              ? 'border-primary-500 shadow-lg scale-105' 
+          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border-2 rounded-lg transition-all select-none ${
+            touchedIndex === index && isReorderMode
+              ? 'border-primary-500 shadow-lg scale-105 bg-primary-50' 
+              : touchedIndex === index
+              ? 'border-primary-300'
               : 'border-gray-300 hover:border-primary-400'
           } ${draggedItem === option ? 'opacity-50' : ''}`}
         >
