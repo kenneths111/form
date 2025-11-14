@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { Form, Question } from '@/lib/types'
 import { CheckCircle, GripVertical } from 'lucide-react'
 
-// Ranked Question Component
+// Ranked Question Component with Mobile Touch Support
 function RankedQuestion({ 
   question, 
   answer, 
@@ -17,6 +17,8 @@ function RankedQuestion({
 }) {
   const [rankings, setRankings] = useState<string[]>([])
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  const [touchStartY, setTouchStartY] = useState<number | null>(null)
+  const [touchedIndex, setTouchedIndex] = useState<number | null>(null)
 
   useEffect(() => {
     // Initialize rankings from answer or from options
@@ -27,6 +29,7 @@ function RankedQuestion({
     }
   }, [question.options, answer])
 
+  // Desktop drag handlers
   const handleDragStart = (item: string) => {
     setDraggedItem(item)
   }
@@ -49,6 +52,39 @@ function RankedQuestion({
     setRankings(newRankings)
     onChange(question.id, newRankings)
     setDraggedItem(null)
+  }
+
+  // Mobile touch handlers
+  const handleTouchStart = (e: React.TouchEvent, index: number) => {
+    setTouchStartY(e.touches[0].clientY)
+    setTouchedIndex(index)
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY === null || touchedIndex === null) return
+    
+    const touchY = e.touches[0].clientY
+    const diff = touchY - touchStartY
+    
+    // Threshold for moving up or down
+    if (Math.abs(diff) > 60) {
+      if (diff < 0 && touchedIndex > 0) {
+        // Swiped up - move item up
+        moveUp(touchedIndex)
+        setTouchStartY(touchY)
+        setTouchedIndex(touchedIndex - 1)
+      } else if (diff > 0 && touchedIndex < rankings.length - 1) {
+        // Swiped down - move item down
+        moveDown(touchedIndex)
+        setTouchStartY(touchY)
+        setTouchedIndex(touchedIndex + 1)
+      }
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setTouchStartY(null)
+    setTouchedIndex(null)
   }
 
   const moveUp = (index: number) => {
@@ -74,7 +110,9 @@ function RankedQuestion({
   return (
     <div className="space-y-2">
       <p className="text-sm text-gray-600 mb-3">
-        Drag items to reorder, or use the arrow buttons. #1 is your top choice.
+        <span className="hidden sm:inline">Drag items to reorder, or use the arrow buttons.</span>
+        <span className="inline sm:hidden">Swipe up/down to reorder, or tap the arrow buttons.</span>
+        {' '}#1 is your top choice.
       </p>
       {rankings.map((option, index) => (
         <div
@@ -83,17 +121,26 @@ function RankedQuestion({
           onDragStart={() => handleDragStart(option)}
           onDragOver={handleDragOver}
           onDrop={() => handleDrop(option)}
-          className="flex items-center gap-3 p-3 bg-white border-2 border-gray-300 rounded-lg hover:border-primary-400 cursor-move transition-colors"
+          onTouchStart={(e) => handleTouchStart(e, index)}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className={`flex items-center gap-2 sm:gap-3 p-3 sm:p-4 bg-white border-2 rounded-lg transition-all touch-none select-none ${
+            touchedIndex === index 
+              ? 'border-primary-500 shadow-lg scale-105' 
+              : 'border-gray-300 hover:border-primary-400'
+          } ${draggedItem === option ? 'opacity-50' : ''}`}
         >
-          <GripVertical className="w-5 h-5 text-gray-400" />
-          <span className="font-semibold text-primary-600 w-8">#{index + 1}</span>
-          <span className="flex-1">{option}</span>
-          <div className="flex gap-1">
+          <GripVertical className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 flex-shrink-0" />
+          <span className="font-semibold text-primary-600 w-6 sm:w-8 text-sm sm:text-base flex-shrink-0">
+            #{index + 1}
+          </span>
+          <span className="flex-1 text-sm sm:text-base break-words">{option}</span>
+          <div className="flex gap-1 flex-shrink-0">
             <button
               type="button"
               onClick={() => moveUp(index)}
               disabled={index === 0}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed rounded touch-manipulation"
             >
               ▲
             </button>
@@ -101,7 +148,7 @@ function RankedQuestion({
               type="button"
               onClick={() => moveDown(index)}
               disabled={index === rankings.length - 1}
-              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
+              className="px-2 sm:px-3 py-1.5 sm:py-2 text-sm sm:text-base bg-gray-100 hover:bg-gray-200 active:bg-gray-300 disabled:opacity-30 disabled:cursor-not-allowed rounded touch-manipulation"
             >
               ▼
             </button>
