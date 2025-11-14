@@ -3,7 +3,114 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Form, Question } from '@/lib/types'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, GripVertical } from 'lucide-react'
+
+// Ranked Question Component
+function RankedQuestion({ 
+  question, 
+  answer, 
+  onChange 
+}: { 
+  question: Question
+  answer: string | string[] | undefined
+  onChange: (questionId: string, value: string[]) => void
+}) {
+  const [rankings, setRankings] = useState<string[]>([])
+  const [draggedItem, setDraggedItem] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Initialize rankings from answer or from options
+    if (answer && Array.isArray(answer) && answer.length > 0) {
+      setRankings(answer)
+    } else if (question.options) {
+      setRankings([...question.options])
+    }
+  }, [question.options, answer])
+
+  const handleDragStart = (item: string) => {
+    setDraggedItem(item)
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+  }
+
+  const handleDrop = (targetItem: string) => {
+    if (!draggedItem) return
+    
+    const newRankings = [...rankings]
+    const draggedIndex = newRankings.indexOf(draggedItem)
+    const targetIndex = newRankings.indexOf(targetItem)
+    
+    // Swap items
+    newRankings.splice(draggedIndex, 1)
+    newRankings.splice(targetIndex, 0, draggedItem)
+    
+    setRankings(newRankings)
+    onChange(question.id, newRankings)
+    setDraggedItem(null)
+  }
+
+  const moveUp = (index: number) => {
+    if (index === 0) return
+    const newRankings = [...rankings]
+    const temp = newRankings[index]
+    newRankings[index] = newRankings[index - 1]
+    newRankings[index - 1] = temp
+    setRankings(newRankings)
+    onChange(question.id, newRankings)
+  }
+
+  const moveDown = (index: number) => {
+    if (index === rankings.length - 1) return
+    const newRankings = [...rankings]
+    const temp = newRankings[index]
+    newRankings[index] = newRankings[index + 1]
+    newRankings[index + 1] = temp
+    setRankings(newRankings)
+    onChange(question.id, newRankings)
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-sm text-gray-600 mb-3">
+        Drag items to reorder, or use the arrow buttons. #1 is your top choice.
+      </p>
+      {rankings.map((option, index) => (
+        <div
+          key={option}
+          draggable
+          onDragStart={() => handleDragStart(option)}
+          onDragOver={handleDragOver}
+          onDrop={() => handleDrop(option)}
+          className="flex items-center gap-3 p-3 bg-white border-2 border-gray-300 rounded-lg hover:border-primary-400 cursor-move transition-colors"
+        >
+          <GripVertical className="w-5 h-5 text-gray-400" />
+          <span className="font-semibold text-primary-600 w-8">#{index + 1}</span>
+          <span className="flex-1">{option}</span>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => moveUp(index)}
+              disabled={index === 0}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
+            >
+              ▲
+            </button>
+            <button
+              type="button"
+              onClick={() => moveDown(index)}
+              disabled={index === rankings.length - 1}
+              className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
+            >
+              ▼
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function FormResponsePage() {
   const params = useParams()
@@ -204,6 +311,9 @@ export default function FormResponsePage() {
             ))}
           </select>
         )
+
+      case 'ranked':
+        return <RankedQuestion question={question} answer={answer} onChange={handleAnswerChange} />
 
       default:
         return null

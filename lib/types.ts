@@ -7,6 +7,7 @@ export type QuestionType =
   | 'email'
   | 'phone'
   | 'date'
+  | 'ranked'
 
 export interface Question {
   id: string

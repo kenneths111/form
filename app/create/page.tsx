@@ -16,6 +16,7 @@ const questionTypes: { value: QuestionType; label: string }[] = [
   { value: 'email', label: 'Email' },
   { value: 'phone', label: 'Phone' },
   { value: 'date', label: 'Date' },
+  { value: 'ranked', label: 'Ranked' },
 ]
 
 export default function CreateForm() {
@@ -108,7 +109,7 @@ export default function CreateForm() {
   }
 
   const needsOptions = (type: QuestionType) => {
-    return ['multiple_choice', 'checkboxes', 'dropdown'].includes(type)
+    return ['multiple_choice', 'checkboxes', 'dropdown', 'ranked'].includes(type)
   }
 
   return (
@@ -194,13 +195,14 @@ export default function CreateForm() {
                     </label>
                   </div>
 
-                  {/* Options for multiple choice, checkboxes, dropdown */}
+                  {/* Options for multiple choice, checkboxes, dropdown, ranked */}
                   {needsOptions(question.type) && (
                     <div className="space-y-2 mt-4">
                       {(question.options || []).map((option, optionIndex) => (
                         <div key={optionIndex} className="flex items-center gap-2">
                           <span className="text-gray-400">
-                            {question.type === 'multiple_choice' ? '○' : '☐'}
+                            {question.type === 'multiple_choice' ? '○' : 
+                             question.type === 'ranked' ? `${optionIndex + 1}.` : '☐'}
                           </span>
                           <input
                             type="text"

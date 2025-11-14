@@ -36,4 +36,3 @@ export async function initDatabase() {
     console.error("Error initializing database:", error);
   }
 }
-

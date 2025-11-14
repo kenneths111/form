@@ -180,12 +180,21 @@ export default function FormResponsesPage() {
                         <p className="font-medium text-gray-900 mb-2">
                           {qIndex + 1}. {question.question}
                         </p>
-                        <p className="text-gray-700 pl-4">
-                          {Array.isArray(answer) 
-                            ? answer.join(', ') 
-                            : answer || <span className="text-gray-400 italic">No answer</span>
-                          }
-                        </p>
+                        <div className="text-gray-700 pl-4">
+                          {question.type === 'ranked' && Array.isArray(answer) ? (
+                            <ol className="list-decimal list-inside space-y-1">
+                              {answer.map((item, idx) => (
+                                <li key={idx}>{item}</li>
+                              ))}
+                            </ol>
+                          ) : Array.isArray(answer) ? (
+                            <span>{answer.join(', ')}</span>
+                          ) : answer ? (
+                            <span>{answer}</span>
+                          ) : (
+                            <span className="text-gray-400 italic">No answer</span>
+                          )}
+                        </div>
                       </div>
                     )
                   })}
