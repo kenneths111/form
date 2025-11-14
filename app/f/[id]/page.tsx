@@ -441,15 +441,24 @@ export default function FormResponsePage() {
   if (submitted) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-12 max-w-md text-center">
-          <div className="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
+        <div className="bg-white rounded-2xl shadow-xl p-12 max-w-lg text-center relative overflow-hidden">
+          {/* Decorative elements */}
+          <div className="absolute top-4 left-4 text-4xl opacity-20">🇸🇬</div>
+          <div className="absolute top-4 right-4 text-4xl opacity-20">🇹🇼</div>
+          <div className="absolute bottom-4 left-8 text-2xl opacity-10">✈️</div>
+          <div className="absolute bottom-4 right-8 text-2xl opacity-10">🎓</div>
+          
+          <div className="bg-green-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6 relative z-10">
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Response Submitted!
+          <h1 className="text-3xl font-bold text-gray-900 mb-4 relative z-10">
+            Thank You! 🙏
           </h1>
-          <p className="text-gray-600 mb-8">
-            Thank you for your submission. Your response has been recorded.
+          <p className="text-lg text-gray-700 mb-4 relative z-10">
+            Your preferences have been recorded! We'll do our best to optimize everyone's experience for this Singapore 🇸🇬 and Taiwan 🇹🇼 GST journey.
+          </p>
+          <p className="text-gray-600 relative z-10">
+            Looking forward to an amazing trip together! 🌟
           </p>
         </div>
       </div>
@@ -457,11 +466,15 @@ export default function FormResponsePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-primary-50 to-white py-12">
       <div className="container mx-auto px-4 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Header */}
-          <div className="bg-white rounded-lg shadow-md p-8 border-t-8 border-primary-500">
+          {/* Form Header with decorations */}
+          <div className="bg-white rounded-lg shadow-md p-8 border-t-8 border-primary-500 relative overflow-hidden">
+            {/* Decorative flags */}
+            <div className="absolute top-2 right-2 text-3xl opacity-20 flex gap-2">
+              🇸🇬 🇹🇼
+            </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-4">{form.title}</h1>
             {form.description && (
               <p className="text-gray-600 whitespace-pre-wrap">{form.description}</p>
@@ -486,10 +499,13 @@ export default function FormResponsePage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:bg-gray-400 font-medium"
+              className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:bg-gray-400 font-medium text-lg"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit'}
+              {isSubmitting ? 'Submitting... ✈️' : 'Submit My Preferences 🚀'}
             </button>
+            <p className="text-center text-sm text-gray-500 mt-3">
+              Singapore 🇸🇬 • Taiwan 🇹🇼 • GST 2024
+            </p>
           </div>
         </form>
       </div>
