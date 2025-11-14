@@ -17,8 +17,10 @@ function RankedQuestion({
 }) {
   const [rankings, setRankings] = useState<string[]>([])
   const [draggedItem, setDraggedItem] = useState<string | null>(null)
+  const [dragOverItem, setDragOverItem] = useState<string | null>(null)
   const [touchStartY, setTouchStartY] = useState<number | null>(null)
   const [touchedIndex, setTouchedIndex] = useState<number | null>(null)
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([])
 
   useEffect(() => {
     // Initialize rankings from answer or from options
@@ -35,62 +37,92 @@ function RankedQuestion({
     e.dataTransfer.effectAllowed = 'move'
   }
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, item: string) => {
     e.preventDefault()
     e.dataTransfer.dropEffect = 'move'
-  }
-
-  const handleDrop = (e: React.DragEvent, targetItem: string) => {
-    e.preventDefault()
-    if (!draggedItem) return
     
-    const newRankings = [...rankings]
-    const draggedIndex = newRankings.indexOf(draggedItem)
-    const targetIndex = newRankings.indexOf(targetItem)
-    
-    // Swap items
-    newRankings.splice(draggedIndex, 1)
-    newRankings.splice(targetIndex, 0, draggedItem)
-    
-    setRankings(newRankings)
-    onChange(question.id, newRankings)
-    setDraggedItem(null)
-  }
-
-  // Mobile touch handlers
-  const handleTouchStart = (e: React.TouchEvent, index: number) => {
-    const touch = e.touches[0]
-    setTouchStartY(touch.clientY)
-    setTouchedIndex(index)
-  }
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    if (touchStartY === null || touchedIndex === null) return
-    
-    const touch = e.touches[0]
-    const touchY = touch.clientY
-    const diffY = touchY - touchStartY
-    
-    // Threshold for moving up or down
-    if (Math.abs(diffY) > 80) {
-      if (diffY < 0 && touchedIndex > 0) {
-        // Swiped up - move item up
-        moveUp(touchedIndex)
-        setTouchStartY(touchY)
-        setTouchedIndex(touchedIndex - 1)
-      } else if (diffY > 0 && touchedIndex < rankings.length - 1) {
-        // Swiped down - move item down
-        moveDown(touchedIndex)
-        setTouchStartY(touchY)
-        setTouchedIndex(touchedIndex + 1)
-      }
+    if (draggedItem && draggedItem !== item) {
+      setDragOverItem(item)
+      
+      // Reorder in real-time for smooth visual feedback
+      const newRankings = [...rankings]
+      const draggedIndex = newRankings.indexOf(draggedItem)
+      const targetIndex = newRankings.indexOf(item)
+      
+      newRankings.splice(draggedIndex, 1)
+      newRankings.splice(targetIndex, 0, draggedItem)
+      
+      setRankings(newRankings)
+      onChange(question.id, newRankings)
     }
   }
 
-  const handleTouchEnd = () => {
-    setTouchStartY(null)
-    setTouchedIndex(null)
+  const handleDragEnd = () => {
+    setDraggedItem(null)
+    setDragOverItem(null)
   }
+
+  // Mobile touch handlers with native events to prevent scrolling
+  useEffect(() => {
+    const elements = itemRefs.current
+
+    const cleanupFns = elements.map((element, index) => {
+      if (!element) return () => {}
+
+      let startY = 0
+
+      const handleTouchStart = (e: TouchEvent) => {
+        const touch = e.touches[0]
+        startY = touch.clientY
+        setTouchStartY(startY)
+        setTouchedIndex(index)
+      }
+
+      const handleTouchMove = (e: TouchEvent) => {
+        if (touchedIndex === null) return
+        
+        const touch = e.touches[0]
+        const currentY = touch.clientY
+        const diffY = currentY - startY
+        
+        // If vertical movement is significant, prevent scrolling and reorder
+        if (Math.abs(diffY) > 80) {
+          e.preventDefault() // This only works with { passive: false }
+          
+          if (diffY < 0 && touchedIndex > 0) {
+            // Swiped up - move item up
+            moveUp(touchedIndex)
+            startY = currentY
+            setTouchedIndex(touchedIndex - 1)
+          } else if (diffY > 0 && touchedIndex < rankings.length - 1) {
+            // Swiped down - move item down
+            moveDown(touchedIndex)
+            startY = currentY
+            setTouchedIndex(touchedIndex + 1)
+          }
+        }
+      }
+
+      const handleTouchEnd = () => {
+        setTouchStartY(null)
+        setTouchedIndex(null)
+      }
+
+      element.addEventListener('touchstart', handleTouchStart, { passive: true })
+      element.addEventListener('touchmove', handleTouchMove, { passive: false })
+      element.addEventListener('touchend', handleTouchEnd, { passive: true })
+
+      return () => {
+        element.removeEventListener('touchstart', handleTouchStart)
+        element.removeEventListener('touchmove', handleTouchMove)
+        element.removeEventListener('touchend', handleTouchEnd)
+      }
+    })
+
+    return () => {
+      cleanupFns.forEach(cleanup => cleanup())
+    }
+  }, [rankings.length, touchedIndex])
 
   const moveUp = (index: number) => {
     if (index === 0) return
@@ -122,18 +154,20 @@ function RankedQuestion({
       {rankings.map((option, index) => (
         <div
           key={option}
+          ref={(el) => {
+            itemRefs.current[index] = el
+          }}
           draggable
           onDragStart={(e) => handleDragStart(e, option)}
-          onDragOver={handleDragOver}
-          onDrop={(e) => handleDrop(e, option)}
-          onTouchStart={(e) => handleTouchStart(e, index)}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          onDragOver={(e) => handleDragOver(e, option)}
+          onDragEnd={handleDragEnd}
           className={`flex items-center gap-3 p-3 rounded-md border transition-all select-none ${
             touchedIndex === index
               ? 'border-accent-500 bg-accent-50' 
               : 'border-primary-200 bg-primary-50 hover:border-primary-300 hover:bg-primary-100'
-          } ${draggedItem === option ? 'opacity-40' : ''}`}
+          } ${draggedItem === option ? 'opacity-40' : ''} ${
+            dragOverItem === option && draggedItem !== option ? 'border-accent-400 scale-105' : ''
+          }`}
         >
           <GripVertical className="w-4 h-4 text-primary-400 flex-shrink-0 cursor-grab active:cursor-grabbing" />
           <span className="font-medium text-primary-900 w-6 text-xs flex-shrink-0">
